@@ -6,12 +6,10 @@ error_reporting(E_ALL);
   require 'vendor/autoload.php';
   include('db.php');
   use Aws\S3\S3Client;
-
+  use Aws\Credentials\CredentialProvider;
+  
   $db = new Database();
   $db->connect();
-  $db->select('settings','value', NULL, 'mkey="bucket"',NULL); // Table name, Column Names, JOIN, WHERE conditions, ORDER BY conditions
-  $array = $db->getResult();
-  $bucket = ($array[0]['value']);
 
   if (!empty($_FILES)) {
     $image = $_FILES['image'];
@@ -20,13 +18,12 @@ error_reporting(E_ALL);
     $extension = end($array_name);
     $image_name = (substr(md5(mt_rand()), 0, 13)) . '.' . $extension; // nome aleatório
 
+    $bucket = getenv("BUCKETNAME");
+
     $s3Client = new S3Client([
       'version'     => 'latest',
       'region'      => 'us-west-1',
-      'credentials' => [
-          'key'    => 'xxxxxx',
-          'secret' => 'xxxxxx',
-      ],
+      'credentials' => $provider
     ]);
     try {
       $result = $s3Client->putObject(array(
